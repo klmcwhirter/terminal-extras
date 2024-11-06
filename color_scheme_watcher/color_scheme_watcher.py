@@ -15,8 +15,10 @@ from kitty.constants import config_dir
 from kitty.fast_data_types import get_boss
 from kitty.utils import log_error
 
-
+# purposely match the file path used by the "themes" kitten
 _CURR_THEME_ = os.path.join(config_dir, 'current-theme.conf')
+
+# keys are possible input strings; values are light / dark ]
 _SCHEME_MAP_ = {
     'no_preference': 'light',
     'dark': 'dark',
@@ -26,7 +28,7 @@ _SCHEME_MAP_ = {
 
 def _watcher_print(*args, **kwargs) -> None:
     '''prepend message with the string `WATCHER: `
-    
+
     This is useful for troubleshooting with `kitty --debug-gl`.
     '''
     print(*['WATCH: ', *args], **kwargs)
@@ -43,6 +45,8 @@ def change_color_scheme(scheme: str):
 
     Based on the requested scheme the appropriate file is copied to `__CURR_THEME__`
     which is purposefully set to the same default file name used by the `themes` kitten as output.
+
+    If __CURR_THEME_ is a symlink, it will be recreated; else will copy over the file.
     '''
     def theme_file_from_scheme(scheme: str) -> str:
         pattern = os.path.join(config_dir, f'themes/{scheme}-*.conf')
@@ -53,7 +57,8 @@ def change_color_scheme(scheme: str):
     theme_file = theme_file_from_scheme(scheme)
     # _watcher_print(f'{theme_file=}')
 
-    shutil.copyfile(theme_file, _CURR_THEME_)
+    # If __CURR_THEME_ is a symlink, it will be recreated; else will copy over the file.
+    shutil.copyfile(theme_file, _CURR_THEME_, follow_symlinks=False)
 
 
 def color_scheme_to_use(mode: str) -> str:
@@ -72,6 +77,7 @@ def color_scheme_to_use(mode: str) -> str:
 # def on_system_color_scheme_change(boss: Boss, appearance: Literal['light', 'dark', 'no_preference']) -> None:
 #     _watcher_print('system color theme changed:', appearance)
 
+
 def on_system_color_scheme_change(mode: str, *args, **kwargs) -> None:
     # _watcher_print(f'system color theme changed: {mode=}, args={args}, kwargs={kwargs}')
 
@@ -84,6 +90,9 @@ def on_system_color_scheme_change(mode: str, *args, **kwargs) -> None:
 
 boss: Boss = get_boss()
 if boss:
+    # --------------
+    # HACK ALERT !!! "monkey patch" the existing method ...
+    # --------------
     boss.on_system_color_scheme_change = on_system_color_scheme_change
 else:
     log_error('WATCHER: could not get Boss instance')
