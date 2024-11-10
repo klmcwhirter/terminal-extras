@@ -11,7 +11,7 @@ async def main():
     # the introspection xml would normally be included in your project
     introspection = ''
     # Note: had to comment out power-saver-enabled element because of validation error.
-    with open('settings-orig.xml', 'r', encoding='utf-8') as f:
+    with open('settings-modified.xml', 'r', encoding='utf-8') as f:
         introspection = f.read()
     # print(f'{introspection=}')
 
